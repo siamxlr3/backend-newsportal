@@ -16,7 +16,7 @@ import uploadRoute from "./src/route/uploadRoute.js"
 const app = express();
 
 app.use(cors({
-    origin: ["http://localhost:5173","https://news-portal-roan.vercel.app"],
+    origin: ["http://localhost:5173","https://news-portal-iota-three.vercel.app"],
     credentials: true,
 }));
 app.use(express.json());
@@ -29,7 +29,7 @@ async function main() {
     await mongoose.connect(process.env.UB_URL);
 
     app.get('/', (req, res) => {
-        res.send('Welcome to the Shopping App!');
+        res.send('Welcome to the News-Portal App!');
     });
 
     // Route uses
