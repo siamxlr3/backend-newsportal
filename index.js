@@ -16,13 +16,13 @@ import uploadRoute from "./src/route/uploadRoute.js"
 const app = express();
 
 app.use(cors({
-    origin: ["http://localhost:5173","https://news-portal-iota-three.vercel.app"],
+    origin: "http://localhost:5173",
     credentials: true,
 }));
 app.use(express.json());
 app.use(cookieParser());
 
-const port = process.env.PORT || 5000;
+const port = 5000;
 export const JWT_SECRET = process.env.JWT_SECRET_KEY;
 
 async function main() {
