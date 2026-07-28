@@ -1,0 +1,6 @@
+services:
+  img:
+    build: .
+    container_name: news-portal
+    ports:
+      - 5000:5000

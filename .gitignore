@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 .env
+gitlab/
+gitlab-runner/
+localstack/
+
 
 # Editor directories and files
 .vscode/*

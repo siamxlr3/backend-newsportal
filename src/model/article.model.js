@@ -1,16 +1,17 @@
-import mongoose from 'mongoose'
+import { dbPool } from "../../index.js";
 
-const articleSchema = new mongoose.Schema({
-    title: {type: String, required: true},
-    description: {type: String, required: true},
-    image: {type: String},
-    category: {type: String},
-    author:{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
-    }
-},{ timestamps: true});
-
-const ArticleModel=mongoose.model("Article",articleSchema);
-export default ArticleModel;
+export const createArticlesTable = async () => {
+  await dbPool.query(`
+    CREATE TABLE IF NOT EXISTS articles (
+      id SERIAL PRIMARY KEY,
+      title VARCHAR(255) NOT NULL,
+      description TEXT NOT NULL,
+      image TEXT,
+      category VARCHAR(100),
+      rating FLOAT DEFAULT 0,
+      author_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+};
