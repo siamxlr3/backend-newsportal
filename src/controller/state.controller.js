@@ -1,23 +1,29 @@
-import { dbPool } from "../../index.js";
-import { countUsers } from "../model/user.model.js";
-import { countAllArticles, getMonthlyArticlesCount } from "./article.controller.js";
-import { countReviews } from "../model/review.model.js";
+import UserModel from "../model/user.js";
+import ArticleModel from "../model/article.js";
+import ReviewModel from "../model/review.js";
 
 export const adminState = async (req, res) => {
+
   try {
-    const totalUser = await countUsers();
-    const totalReviews = await countReviews();
-    const totalPostallTime = await countAllArticles();
-    const monthlyPosts = await getMonthlyArticlesCount();
+
+    const totalUser = await UserModel.count();
+
+    const totalReviews = await ReviewModel.count();
+
+    const totalPostallTime = await ArticleModel.count();
 
     res.status(200).json({
       totalUser,
       totalReviews,
       totalPostallTime,
-      monthlyPosts,
     });
+
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Something went wrong" });
+
+    console.log(err);
+
+    res.status(500).json({
+      message: "Something went wrong",
+    });
   }
 };

@@ -1,18 +1,37 @@
 import multer from "multer";
-import multerS3 from "multer-s3";
-import s3 from "../utilitis/s3.js";
+import cloudinary from "../utilitis/cloudinary.js";
 
+
+const storage = multer.memoryStorage();
 
 
 const upload = multer({
-  storage: multerS3({
-    s3: s3,
-    bucket: process.env.AWS_BUCKET_NAME,
-    contentType: multerS3.AUTO_CONTENT_TYPE,
-    key: function (req, file, cb) {
-      cb(null, `images/${Date.now()}-${file.originalname}`);
-    },
-  }),
+  storage: storage,
 });
+
+
+export const uploadToCloudinary = (file) => {
+
+  return new Promise((resolve, reject) => {
+
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: "news-portal",
+      },
+
+      (error, result) => {
+
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result);
+        }
+      }
+    );
+
+    stream.end(file.buffer);
+  });
+};
+
 
 export default upload;

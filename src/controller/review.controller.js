@@ -1,48 +1,108 @@
-import {
-  createReview,
-  findReviewsByUserId,
-  deleteReviewById,
-} from "../model/review.model.js";
+import ReviewModel from "../model/review.js";
 
+
+// CREATE REVIEW
 export const PostReview = async (req, res) => {
-  try {
-    const { comment, userID, articleID, rating } = req.body;
 
-    if (!comment || !userID || articleID === undefined) {
-      return res.status(400).json({ message: "Missing required parameters" });
+  try {
+
+    const {
+      comment,
+      userID,
+      articleID,
+      rating,
+    } = req.body;
+
+    if (!comment || !userID || !articleID) {
+      return res.status(400).json({
+        message: "Missing required parameters",
+      });
     }
 
-    await createReview({ comment, rating, userID, articleID });
+    await ReviewModel.create({
+      comment,
+      userID,
+      articleID,
+      rating,
+    });
 
-    res.status(200).json({ message: "Reviews posted successfully" });
+    res.status(200).json({
+      message: "Reviews posted successfully",
+    });
+
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Error posting review" });
+
+    console.log(err);
+
+    res.status(500).json({
+      message: "Error posting review",
+    });
   }
 };
 
+
+// GET USER REVIEWS
 export const getAllReviews = async (req, res) => {
+
   const { userID } = req.params;
+
   try {
-    const data = await findReviewsByUserId(userID);
+
+    const data = await ReviewModel.findAll({
+      where: {
+        userID,
+      },
+    });
+
     if (data.length === 0) {
-      return res.status(404).json({ message: "No review found" });
+      return res.status(404).json({
+        message: "No review found",
+      });
     }
-    res.status(200).json({ message: "Reviews founded successfully", data: data });
+
+    res.status(200).json({
+      message: "Reviews founded successfully",
+      data,
+    });
+
   } catch (err) {
-    res.status(404).json({ message: "No review found" });
+
+    console.log(err);
+
+    res.status(500).json({
+      message: "Something went wrong",
+    });
   }
 };
 
+
+// DELETE REVIEW
 export const deleteReview = async (req, res) => {
+
   const { id } = req.params;
+
   try {
-    const data = await deleteReviewById(id);
+
+    const data = await ReviewModel.findByPk(id);
+
     if (!data) {
-      return res.status(404).json({ message: "No review found" });
+      return res.status(404).json({
+        message: "No review found",
+      });
     }
-    res.status(200).json({ message: "Review deleted" });
+
+    await data.destroy();
+
+    res.status(200).json({
+      message: "Review deleted",
+    });
+
   } catch (err) {
-    res.status(404).json({ message: "No review found" });
+
+    console.log(err);
+
+    res.status(500).json({
+      message: "Something went wrong",
+    });
   }
 };

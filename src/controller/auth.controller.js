@@ -1,55 +1,101 @@
-import { findUserByEmail, createUser } from "../model/user.model.js";
-import bcrypt from "bcrypt";
-import generateToken from "../middleware/generateToken.js";
+import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
+import UserModel from "../model/user.js";
 
-export const Register = async (req, res) => {
-  const { username, email, password } = req.body;
+const ALLOWED_SIGNUP_ROLES = ["user", "author","admin"];
 
-  if (!username || !email || !password || username === "" || email === "" || password === "") {
-    return res.status(401).json({ error: "Please fields are required" });
-  }
+const signToken = (user) =>
+  jwt.sign(
+    { id: user.id, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
 
+// REGISTER
+export const register = async (req, res) => {
   try {
-    const existingUser = await findUserByEmail(email);
-    if (existingUser) {
-      return res.status(400).json({ error: "User already exists with this email" });
+    const { username, email, password, role } = req.body;
+
+    if (!username || !email || !password) {
+      return res.status(400).json({
+        message: "Missing required fields",
+      });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12);
-    await createUser({
+    const existing = await UserModel.findOne({ where: { email } });
+
+    if (existing) {
+      return res.status(409).json({
+        message: "Email already in use",
+      });
+    }
+
+    // Never trust a client-supplied "editor" or "admin" role.
+    // Those are granted later by an existing admin, not at signup.
+    const safeRole = ALLOWED_SIGNUP_ROLES.includes(role) ? role : "user";
+
+    const newUser = await UserModel.create({
       username,
       email,
-      password: hashedPassword,
+      password, // hashed automatically by the beforeCreate hook
+      role: safeRole,
     });
 
-    res.status(200).json({ message: "Successfully SigngUP" });
+
+    res.status(201).json({
+      message: "Registered successfully",
+      user: {
+        id: newUser.id,
+        username: newUser.username,
+        email: newUser.email,
+        role: newUser.role,
+      },
+    });
   } catch (err) {
     console.log(err);
-    res.status(500).json({ error: "Something went wrong" });
+    res.status(500).json({
+      message: "Error registering user",
+    });
   }
 };
 
-export const Login = async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password || email === "" || password === "") {
-    return res.status(401).json({ error: "Please fields are required" });
-  }
+// LOGIN
+export const login = async (req, res) => {
   try {
-    const user = await findUserByEmail(email);
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        message: "Missing email or password",
+      });
+    }
+
+    
+    const user = await UserModel.scope("withPassword").findOne({
+      where: { email },
+    });
+
     if (!user) {
-      return res.status(401).json({ error: "User not found" });
+      return res.status(401).json({
+        message: "Invalid credentials",
+      });
     }
-    const Validpassowrd = await bcrypt.compare(password, user.password);
-    if (!Validpassowrd) {
-      return res.status(401).json({ error: "User not found" });
+
+    const match = await bcrypt.compare(password, user.password);
+
+    if (!match) {
+      return res.status(401).json({
+        message: "Invalid credentials",
+      });
     }
-    const token = await generateToken(user._id);
-    res.cookie("token", token, { httpOnly: true, secure: true, sameSite: "none" });
+
+    const token = signToken(user);
+
     res.status(200).json({
-      message: "Successfully Login",
+      message: "Login successful",
       token,
       user: {
-        _id: user._id,
+        id: user.id,
         username: user.username,
         email: user.email,
         role: user.role,
@@ -57,16 +103,29 @@ export const Login = async (req, res) => {
     });
   } catch (err) {
     console.log(err);
-    res.status(500).json({ error: "Something went wrong" });
+    res.status(500).json({
+      message: "Error logging in",
+    });
   }
 };
 
-export const userLogout = async (req, res) => {
+// CURRENT USER
+export const me = async (req, res) => {
   try {
-    res.clearCookie("token");
-    res.status(200).json({ message: "Successfully Logout" });
-  } catch (e) {
-    console.log(e);
-    res.status(500).json({ error: "Something went wrong" });
+    const user = await UserModel.findByPk(req.user.id);
+    // password already excluded by defaultScope
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json({ data: user });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message: "Error fetching profile",
+    });
   }
 };
