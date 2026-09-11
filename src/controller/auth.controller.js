@@ -1,8 +1,9 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import UserModel from "../model/user.js";
+import { uploadToCloudinary } from "../middleware/upload.js";
 
-const ALLOWED_SIGNUP_ROLES = ["user", "author","admin"];
+const ALLOWED_SIGNUP_ROLES = ["user", "author"]; // admin is never self-assigned at signup
 
 const signToken = (user) =>
   jwt.sign(
@@ -30,17 +31,22 @@ export const register = async (req, res) => {
       });
     }
 
-    // Never trust a client-supplied "editor" or "admin" role.
-    // Those are granted later by an existing admin, not at signup.
     const safeRole = ALLOWED_SIGNUP_ROLES.includes(role) ? role : "user";
+
+    let profileImage = null;
+
+    if (req.file) {
+      const result = await uploadToCloudinary(req.file);
+      profileImage = result.secure_url;
+    }
 
     const newUser = await UserModel.create({
       username,
       email,
       password, // hashed automatically by the beforeCreate hook
       role: safeRole,
+      profileImage,
     });
-
 
     res.status(201).json({
       message: "Registered successfully",
@@ -49,6 +55,7 @@ export const register = async (req, res) => {
         username: newUser.username,
         email: newUser.email,
         role: newUser.role,
+        profileImage: newUser.profileImage,
       },
     });
   } catch (err) {
@@ -70,7 +77,6 @@ export const login = async (req, res) => {
       });
     }
 
-    
     const user = await UserModel.scope("withPassword").findOne({
       where: { email },
     });
@@ -99,6 +105,7 @@ export const login = async (req, res) => {
         username: user.username,
         email: user.email,
         role: user.role,
+        profileImage: user.profileImage,
       },
     });
   } catch (err) {
@@ -113,7 +120,6 @@ export const login = async (req, res) => {
 export const me = async (req, res) => {
   try {
     const user = await UserModel.findByPk(req.user.id);
-    // password already excluded by defaultScope
 
     if (!user) {
       return res.status(404).json({

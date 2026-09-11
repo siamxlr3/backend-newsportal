@@ -3,6 +3,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import redisClient from "./src/utilitis/redis.js"
 
 import syncDatabase from "./src/database/syncDatabase.js";
 
@@ -48,6 +49,7 @@ export const JWT_SECRET = process.env.JWT_SECRET_KEY;
 
 async function main() {
   await syncDatabase();
+  await redisClient.ping()
 
   app.get("/", (req, res) => {
     res.send("Welcome to the News-Portal App!");

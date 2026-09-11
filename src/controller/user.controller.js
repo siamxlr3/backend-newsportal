@@ -54,21 +54,25 @@ export const deleteUser = async (req, res) => {
   }
 };
 
+
 // UPDATE USER
 export const updateUser = async (req, res) => {
   const { id } = req.params;
-  const { username, profession, bio, profileImage } = req.body;
+  const { username, profession, bio } = req.body;
 
   try {
-    // Only the account owner or an admin may edit this profile
-    if (req.user.id !== Number(id) && req.user.role !== "admin") {
-      return res.status(403).json({ error: "You can only update your own profile" });
-    }
-
-    const data = await UserModel.findByPk(id);
+   
+     const data = await UserModel.findByPk(id);
 
     if (!data) {
       return res.status(404).json({ error: "User not found" });
+    }
+
+    let profileImage = data.profileImage;
+
+    if (req.file) {
+      const result = await uploadToCloudinary(req.file);
+      profileImage = result.secure_url;
     }
 
     await data.update({ username, profession, bio, profileImage });

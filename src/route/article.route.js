@@ -7,63 +7,40 @@ import {
   getArticleQuery,
   getSingleArticle,
   updateArticle,
+  // submitArticle,
+  startReview,
+  approveArticle,
+  rejectArticle,
+  publishArticle,
 } from "../controller/article.controller.js";
 
 import { verifyToken } from "../middleware/verifyToken.js";
 import { verifyRole } from "../middleware/verifyRole.js";
-
 import upload from "../middleware/upload.js";
-
 
 const router = express.Router();
 
 
-// CREATE ARTICLE
-router.post(
-  "/creat-post",
-  upload.single("image"),
-  createArticlepost
-);
+router.post("/creat-post",verifyToken,verifyRole("author", "editor", "admin"),upload.single("image"),createArticlepost);
 
+router.get("/getall-post", getAllArticles);
 
-// GET ALL ARTICLES
-router.get(
-  "/getall-post",
-  getAllArticles
-);
+router.get("/get-query", getArticleQuery);
 
+router.get("/getsingle-post/:id", getSingleArticle);
 
-// GET ARTICLES BY CATEGORY
-router.get(
-  "/get-query",
-  getArticleQuery
-);
+router.post("/update-post/:id",verifyToken,upload.single("image"),updateArticle);
 
+router.delete("/delete-post/:id",verifyToken,verifyRole("admin"),deleteArticle);
 
-// GET SINGLE ARTICLE
-router.get(
-  "/getsingle-post/:id",
-  getSingleArticle
-);
+// router.post("/:id/submit",verifyToken,verifyRole("author", "editor", "admin"),submitArticle);
 
+router.post("/:id/start-review",verifyToken,verifyRole("editor", "admin"),startReview);
 
-// UPDATE ARTICLE
-router.post(
-  "/update-post/:id",
-  verifyToken,
-  verifyRole,
-  upload.single("image"),
-  updateArticle
-);
+router.post("/:id/approve",verifyToken,verifyRole("editor", "admin"),approveArticle);
 
+router.post("/:id/reject",verifyToken,verifyRole("editor", "admin"),rejectArticle);
 
-// DELETE ARTICLE
-router.delete(
-  "/delete-post/:id",
-  verifyToken,
-  verifyRole,
-  deleteArticle
-);
-
+router.post("/:id/publish",verifyToken,verifyRole("editor", "admin"),publishArticle);
 
 export default router;

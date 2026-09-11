@@ -34,6 +34,24 @@ const ArticleModel = sequelize.define(
       allowNull: false,
       field: "author_id",
     },
+
+    status: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: "submitted", //  submitted | under_review | approved | published
+    },
+
+    reviewerID: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      field: "reviewer_id",
+    },
+
+    publishedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: "published_at",
+    },
   },
   {
     tableName: "articles",
