@@ -1,6 +1,7 @@
 import ArticleModel from "./article.js";
 import ReviewModel from "./review.js";
 import UserModel from "./user.js";
+import NotificationModel from "./notification.js";
 
 // User → Articles
 UserModel.hasMany(ArticleModel, {
@@ -41,8 +42,22 @@ ReviewModel.belongsTo(UserModel, {
   as: "user",
 });
 
+
+UserModel.hasMany(NotificationModel, {
+  foreignKey: "recipientID",
+  as: "notifications",
+  onDelete: "CASCADE",
+});
+
+NotificationModel.belongsTo(UserModel, {
+  foreignKey: "recipientID",
+  as: "recipient",
+});
+
+
 export {
   UserModel,
   ArticleModel,
   ReviewModel,
+  NotificationModel 
 };
